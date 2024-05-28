@@ -1,0 +1,24 @@
+%dw 2.0
+
+type auto_8e7d7d10_e1e2_4c43_b767_6f2463e100b2_Output_Payload = {
+  data?: {
+    name: String, 
+    id: Number, 
+    _?: Any
+  } {"description": "The actual data returned by the service. If the service is a GET Request, the collection or single resource entity would reside here."}, 
+  error?: {
+    code: String, 
+    requestReference?: {
+      method: String, 
+      uri: String, 
+      _?: Any
+    } {"description": "Request metadata for the request that caused the error."}, 
+    description: String, 
+    additionalDetails?: Any, 
+    timestamp: String, 
+    _?: Any
+  } {"description": "An optional object only returned in case of an error."}, 
+  _?: Any
+} {"description": "The common response format used for all API Calls.",
+"label": "Common Response Format"}
+

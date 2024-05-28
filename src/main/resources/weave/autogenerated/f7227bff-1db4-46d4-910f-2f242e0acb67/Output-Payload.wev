@@ -1,0 +1,7 @@
+%dw 2.0
+
+type auto_f7227bff_1db4_46d4_910f_2f242e0acb67_Output_Payload = {|
+  id: Any, 
+  name: Any
+|}
+

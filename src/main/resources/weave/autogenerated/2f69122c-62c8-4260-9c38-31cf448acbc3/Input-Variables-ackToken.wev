@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_2f69122c_62c8_4260_9c38_31cf448acbc3_Input_Variables_ackToken = Any
+

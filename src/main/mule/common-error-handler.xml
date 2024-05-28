@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:ibm-mq="http://www.mulesoft.org/schema/mule/ibm-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ibm-mq http://www.mulesoft.org/schema/mule/ibm-mq/current/mule-ibm-mq.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="498c3094-b24a-45fd-b9de-9efd169a967e" >
+		<email:smtp-connection host="localhost" />
+	</email:smtp-config>
+	<error-handler name="common-error-handlerError_Handler" doc:id="eff2a6b4-8723-43e5-9a4f-96b926cbdeb0" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="efc4a04e-5249-453b-923e-729d8c516537" type="ANY">
+			<ee:transform doc:name="Transform Message" doc:id="3362906c-9ec5-40af-99f9-b8af755fd9c1" >
+				<ee:message />
+				<ee:variables >
+					<ee:set-variable variableName="redelivery_count" ><![CDATA[%dw 2.0
+output application/java
+---
+if ( attributes.properties.'count' == null)
+1
+else
+attributes.properties.'count' + 1]]></ee:set-variable>
+					<ee:set-variable variableName="ackToken" ><![CDATA[attributes.'Ack Id']]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="4b20ad82-ee6f-48d9-832b-09f03500f093" />
+			<flow-ref doc:name="Flow Reference" doc:id="41859eb9-aa7b-4e4f-82a5-b118ec36390a" name="common-error-handlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8d6521ac-0c20-41f8-bc1b-2518d473c61f" type="EXPRESSION">
+			<ee:transform doc:name="Transform Message" doc:id="1eb6ec9f-0447-4a38-9fe6-08bac5907cbe" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="8a6159e0-1e73-4b29-8bbf-de7b51194873" />
+			<flow-ref doc:name="Flow Reference" doc:id="995e6b36-aa53-4f01-98a2-2bf7c85950ad" name="common-error-handlerSub_Flow"/>
+		</on-error-continue>
+	</error-handler>
+	<sub-flow name="common-error-handlerSub_Flow" doc:id="2f69122c-62c8-4260-9c38-31cf448acbc3" >
+		<logger level="INFO" doc:name="Logger" doc:id="acfb890e-1152-4594-85a6-67851342c954" />
+		<ee:transform doc:name="Transform Message" doc:id="cbe61ea0-60e4-4989-8c31-77bd7e412975" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<email:send doc:name="Send" doc:id="03bd58c1-8ff2-41e6-abe3-97ed69f5dcb7" config-ref="Email_SMTP" toAddresses="#[payload]"/>
+	</sub-flow>
+</mule>

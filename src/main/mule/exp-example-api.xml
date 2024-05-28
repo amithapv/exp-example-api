@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="3ea36cd9-b61d-48ed-90b0-3659076dd3c7" />
+	<flow name="implementationFlow" doc:id="8e7d7d10-e1e2-4c43-b767-6f2463e100b2" >
+		<http:listener doc:name="Listener" doc:id="1f43b4e2-a812-4618-b566-f3f2885e46ac" config-ref="exp-example-api-httpListenerConfig" path="/base"/>
+		<logger level="INFO" doc:name="input payload logger" doc:id="d2cd81d7-e2cc-4b7c-ac42-92ffacc17cd9" message="#[payload]"/>
+		<ee:transform doc:name="JSON to MQ message" doc:id="9f6f8cde-c4f3-441e-881f-114af0daf6ed" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="object store flow" doc:id="8f005982-ee71-4124-a2f5-b6abea209576" name="exp-example-api_store_Sub_Flow"/>
+		<ee:transform doc:name="Success resp" doc:id="cfa24207-9b2e-40dc-b80e-ab46366956b1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="exp-example-api_store_Sub_Flow" doc:id="f7227bff-1db4-46d4-910f-2f242e0acb67" >
+		<logger level="INFO" doc:name="Logger" doc:id="8b95b74f-9954-4840-8b8d-a74f79365098" message="--------------before os store-----------------#[payloada]" />
+		<os:store doc:name="Store" doc:id="b21a6dbc-4571-412b-90e8-85efc9c8e2f5" key="product" objectStore="Object_store" />
+		<logger level="INFO" doc:name="Logger" doc:id="652cee58-645f-4f66-83e5-ae8b7b2d5918" message="---------------------after store os #[payload]" />
+		<flow-ref doc:name="Flow Reference" doc:id="92e602f3-5e4a-491c-b372-a5986a20ab16" name="exp-example-process_Sub_Flow" />
+	</sub-flow>
+	<sub-flow name="exp-example-process_Sub_Flow" doc:id="afb5325d-4d23-4a1c-9fbd-1e60262a3d9e" >
+		<os:retrieve doc:name="Retrieve" doc:id="84061ce1-30d8-4fce-ba32-26c0720dd2df" key="product">
+				<os:default-value><![CDATA[payload]]></os:default-value>
+			</os:retrieve>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="06b5c7fc-4e0a-4e7c-8341-3b293a3719b5" />
+		<try doc:name="Try" doc:id="c3633dac-739b-4a7d-9531-a200151a6d72">
+				<flow-ref doc:name="system api call" doc:id="f66935dc-7f01-4918-97a9-210b710a9470" name="implementationSub_Flow" />
+				<os:remove doc:name="Remove" doc:id="8db1ddc3-da67-4b80-9c77-da8478d76f62" key="product" objectStore="Object_store" />
+			<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2e86a6dd-40fe-4cb8-8519-d51a4c73daae">
+						<logger level="INFO" doc:name="Logger" doc:id="21de51c5-b4d0-4456-8a56-b970e468804d" />
+						<ee:transform doc:name="Transform Message" doc:id="805e5f9e-2e47-44be-9745-fa99daa03938">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+message]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</on-error-continue>
+				</error-handler>
+			</try>
+	</sub-flow>
+	<sub-flow name="exp-example-retrive_Sub_Flow" doc:id="5673d177-f8af-4f19-84d4-7bcf001befb1" >
+		<os:retrieve-all doc:name="Retrieve all" doc:id="1d814df1-2fe8-4e18-8588-74caf60dd35b" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="a4f0ccc0-ad56-4564-8cfa-17f5b1ccc6fb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="implementationSub_Flow" doc:id="1c13a6ab-1c5b-4f8d-8065-405ccf376dff" >
+		<http:request method="POST" doc:name="system api" doc:id="b8f56f2e-e1ec-4ee3-9ad0-892b13e9ccd5" config-ref="HTTP_Request_configurations" path="${sys_example.basePath}"/>
+	</sub-flow>
+</mule>

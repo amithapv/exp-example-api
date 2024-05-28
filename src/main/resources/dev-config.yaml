@@ -1,0 +1,4 @@
+sys_example:
+    host: "localhost"
+    port: "8081"
+    basePath: "/publish"

@@ -1,0 +1,10 @@
+%dw 2.0
+
+type auto_8e7d7d10_e1e2_4c43_b767_6f2463e100b2_Input_Payload = {|
+  data: {|
+    id: Number, 
+    name: String
+  |}
+|} {"mediaType": "application/json",
+"encoding": "UTF-8"}
+
